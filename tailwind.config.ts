@@ -52,6 +52,24 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				scanner: {
+					overlay: 'hsl(var(--scanner-overlay))',
+					guide: 'hsl(var(--scanner-guide))',
+					frame: 'hsl(var(--scanner-frame))'
+				},
+				connection: {
+					usa: 'hsl(var(--connected-usa))',
+					israel: 'hsl(var(--connected-israel))',
+					clean: 'hsl(var(--not-connected))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

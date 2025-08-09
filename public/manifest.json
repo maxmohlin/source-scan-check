@@ -1,0 +1,20 @@
+{
+  "name": "Product Scanner - USA & Israel Connections",
+  "short_name": "Product Scanner",
+  "description": "Scan product barcodes to check connections to USA and Israeli companies",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}
