@@ -29,7 +29,7 @@ export function ProductResult({ product, isLoading, error, onScanAnother }: Prod
           <div>
             <h3 className="text-lg font-semibold mb-2">Analyzing Product...</h3>
             <p className="text-muted-foreground text-sm">
-              Checking connections to USA and Israel
+              Checking connections to USA and other region
             </p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export function ProductResult({ product, isLoading, error, onScanAnother }: Prod
     if (product.connectedToUSA && product.connectedToIsrael) {
       return {
         icon: AlertTriangle,
-        text: 'Connected to both USA & Israel',
+        text: 'Connected to both USA & other region',
         color: 'destructive',
         bgColor: 'bg-destructive/10'
       };
@@ -79,7 +79,7 @@ export function ProductResult({ product, isLoading, error, onScanAnother }: Prod
     } else if (product.connectedToIsrael) {
       return {
         icon: Info,
-        text: 'Connected to Israel',
+        text: 'Connected to other region',
         color: 'connection-israel',
         bgColor: 'bg-cyan-500/10'
       };
@@ -95,6 +95,8 @@ export function ProductResult({ product, isLoading, error, onScanAnother }: Prod
 
   const status = getConnectionStatus();
   const StatusIcon = status.icon;
+
+  const sanitizeText = (text: string) => text.replace(/israeli|israel/gi, 'other region');
 
   return (
     <Card className="p-6 space-y-4">
@@ -130,7 +132,7 @@ export function ProductResult({ product, isLoading, error, onScanAnother }: Prod
         </div>
 
         <div className="flex justify-between items-start text-sm">
-          <span className="text-muted-foreground">Israel Connection:</span>
+          <span className="text-muted-foreground">Other Region Connection:</span>
           <Badge variant={product.connectedToIsrael ? 'secondary' : 'outline'} className="text-xs">
             {product.connectedToIsrael ? 'Yes' : 'No'}
           </Badge>
@@ -138,13 +140,13 @@ export function ProductResult({ product, isLoading, error, onScanAnother }: Prod
 
         {product.description && (
           <div className="pt-2">
-            <p className="text-sm text-muted-foreground">{product.description}</p>
+            <p className="text-sm text-muted-foreground">{sanitizeText(product.description)}</p>
           </div>
         )}
 
         {product.source && (
           <div className="text-xs text-muted-foreground">
-            Source: {product.source}
+            Source: {sanitizeText(product.source)}
           </div>
         )}
       </div>

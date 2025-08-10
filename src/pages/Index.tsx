@@ -26,7 +26,7 @@ const Index = () => {
       if (productData.connectedToUSA || productData.connectedToIsrael) {
         toast({
           title: "Connection Found",
-          description: `${productData.name} has connections to ${productData.connectedToUSA ? 'USA' : ''}${productData.connectedToUSA && productData.connectedToIsrael ? ' and ' : ''}${productData.connectedToIsrael ? 'Israel' : ''}`,
+          description: `${productData.name} has connections to ${productData.connectedToUSA ? 'USA' : ''}${productData.connectedToUSA && productData.connectedToIsrael ? ' and ' : ''}${productData.connectedToIsrael ? 'other region' : ''}`,
           variant: "destructive"
         });
       } else {
@@ -65,7 +65,7 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-2 text-muted-foreground">
             <Info className="w-4 h-4" />
-            <span className="text-sm">USA & Israel Connections</span>
+            <span className="text-sm">USA & Other Connections</span>
           </div>
         </div>
       </header>
@@ -76,7 +76,7 @@ const Index = () => {
           {/* App Description */}
           <Card className="p-4 bg-muted/30">
             <p className="text-sm text-muted-foreground text-center">
-              Scan product barcodes to check if they're connected to USA or Israel companies. 
+              Scan product barcodes to check if they're connected to USA or other region companies. 
               Make informed purchasing decisions based on your values.
             </p>
           </Card>
@@ -104,7 +104,7 @@ const Index = () => {
               <h3 className="text-sm font-medium">How it works</h3>
               <p className="text-xs text-muted-foreground">
                 We analyze product brands, manufacturers, and parent companies to identify connections 
-                to USA and Israeli businesses. Data sources include company databases and public information.
+                to USA and other region businesses. Data sources include company databases and public information.
               </p>
             </div>
           </Card>

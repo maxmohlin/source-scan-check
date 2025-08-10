@@ -90,7 +90,7 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
           <div>
             <h3 className="text-lg font-semibold mb-2">Scan Product Barcode</h3>
             <p className="text-muted-foreground text-sm mb-4">
-              Point your camera at a barcode to check if the product is connected to USA or Israel
+              Point your camera at a barcode to check if the product is connected to USA or other region
             </p>
           </div>
           <Button onClick={onToggleScanning} className="bg-scanner-guide hover:bg-scanner-guide/90 text-scanner-guide-foreground">
