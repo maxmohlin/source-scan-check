@@ -71,3 +71,31 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+---
+
+## Branching and CI workflow
+
+We use two persistent branches:
+- dev: main development branch
+- test: sandbox/testing branch
+
+GitHub Actions CI runs on push and pull requests targeting dev and test. The workflow at .github/workflows/ci.yml performs:
+- Lint (npm run lint)
+- Type check (npx tsc --noEmit)
+- Build (npm run build)
+
+### Branch badge in the app
+The app shows a small badge with the current branch when VITE_BRANCH_NAME is set and is not "dev". CI sets VITE_BRANCH_NAME automatically from the Git ref during the build, so preview artifacts and deployments display the branch.
+
+### Local setup
+Create a .env file (see .env.example) and optionally set:
+
+```
+VITE_BRANCH_NAME=dev
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+This is optional; the app has safe fallbacks for Supabase, and the badge is hidden if VITE_BRANCH_NAME is empty or "dev".
+

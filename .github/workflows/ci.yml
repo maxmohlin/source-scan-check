@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ dev, test ]
+  pull_request:
+    branches: [ dev, test ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        env:
+          VITE_BRANCH_NAME: ${{ github.ref_name }}
+        run: npm run build
