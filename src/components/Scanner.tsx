@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,11 +12,11 @@ interface ScannerProps {
 
 export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader>();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [error, setError] = useState<string>('');
   const [streamControls, setStreamControls] = useState<any>(null);
-
   useEffect(() => {
     codeReader.current = new BrowserMultiFormatReader();
     
@@ -36,21 +36,25 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
   const startScanning = async () => {
     try {
       setError('');
-      
       if (!codeReader.current || !videoRef.current) return;
 
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('MediaDevices API not supported');
+      }
+
+      // Prompt for camera permission first (iOS Safari requirement)
+      const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      tempStream.getTracks().forEach((t) => t.stop());
       setHasPermission(true);
-      
-      const constraints = { 
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
-      };
-      
-      const controls = await codeReader.current.decodeFromConstraints(
-        constraints,
+
+      // Choose the back camera if available
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter((d) => d.kind === 'videoinput');
+      const back = videoDevices.find((d) => /back|rear|environment/i.test(d.label));
+      const deviceId = (back || videoDevices[0])?.deviceId;
+
+      const controls = await codeReader.current.decodeFromVideoDevice(
+        deviceId || undefined,
         videoRef.current,
         (result, err) => {
           if (result) {
@@ -59,12 +63,31 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
           }
         }
       );
-      
+
       setStreamControls(controls);
-    } catch (err) {
-      console.error('Scanner error:', err);
+    } catch (err: any) {
+      console.error('Scanner error:', err, { name: err?.name, message: err?.message });
       setHasPermission(false);
-      setError('Camera access denied or not available');
+      let message = 'Camera access denied or not available';
+      switch (err?.name) {
+        case 'NotAllowedError':
+        case 'PermissionDeniedError':
+          message = 'Camera permission denied. Enable it in Settings > Safari > Camera, then reload.';
+          break;
+        case 'NotFoundError':
+        case 'OverconstrainedError':
+          message = 'No suitable camera found. Try Scan from Photo.';
+          break;
+        case 'SecurityError':
+          message = 'Camera blocked by browser. Open this site over HTTPS or in Safari.';
+          break;
+        default:
+          if (err?.message?.includes('MediaDevices')) {
+            message = 'Browser does not support camera. Try Scan from Photo.';
+          }
+          break;
+      }
+      setError(message);
     }
   };
 
@@ -77,6 +100,28 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
+    }
+    (codeReader.current as any)?.reset?.();
+  };
+  
+  const handlePickImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !codeReader.current) return;
+    try {
+      setError('');
+      const url = URL.createObjectURL(file);
+      const result = await codeReader.current.decodeFromImageUrl(url);
+      URL.revokeObjectURL(url);
+      onScan(result.getText());
+    } catch (err) {
+      console.error('Image decode error:', err);
+      setError('Could not read a barcode from the selected image.');
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -97,6 +142,19 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
             <Scan className="w-4 h-4 mr-2" />
             Start Scanning
           </Button>
+          <div className="mt-2">
+            <Button onClick={handlePickImage} variant="outline">
+              Scan from Photo
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleImageSelected}
+            />
+          </div>
           {hasPermission === false && (
             <p className="text-destructive text-sm mt-2">
               Camera permission required to scan barcodes
