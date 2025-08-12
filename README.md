@@ -99,3 +99,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 This is optional; the app has safe fallbacks for Supabase, and the badge is hidden if VITE_BRANCH_NAME is empty or "dev".
 
+---
+
+## Camera permissions
+
+If your browser doesn’t show a camera prompt in the embedded preview, click "Open in new tab" from the scanner screen and grant camera access there. Some browsers block camera in iframes.

@@ -33,6 +33,60 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
     }
   }, [isScanning]);
 
+  const isEmbedded = () => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  };
+
+  const requestCameraPermissionInGesture = async () => {
+    try {
+      setError('');
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('MediaDevices API not supported');
+      }
+      const constraints = { video: { facingMode: { ideal: 'environment' } } } as MediaStreamConstraints;
+      const temp = await navigator.mediaDevices.getUserMedia(constraints);
+      temp.getTracks().forEach((t) => t.stop());
+      setHasPermission(true);
+      onToggleScanning();
+    } catch (err: any) {
+      const embedded = isEmbedded();
+      console.info('getUserMedia denied in gesture', {
+        embedded,
+        protocol: window.location?.protocol,
+        host: window.location?.host,
+        err: { name: err?.name, message: err?.message },
+      });
+      let message = 'Camera access denied or unavailable.';
+      switch (err?.name) {
+        case 'NotAllowedError':
+        case 'PermissionDeniedError':
+          message = embedded
+            ? 'Camera is blocked in this embedded preview. Open in a new tab to grant permission.'
+            : 'Camera permission denied. Check your browser settings and reload.';
+          break;
+        case 'NotFoundError':
+        case 'OverconstrainedError':
+          message = 'No suitable camera found. Try Scan from Photo.';
+          break;
+        case 'SecurityError':
+          message = embedded
+            ? 'Camera is blocked in this embedded preview. Open in a new tab to grant permission.'
+            : 'Camera blocked by browser. Use HTTPS and try again.';
+          break;
+        default:
+          if (err?.message?.includes('MediaDevices')) {
+            message = 'Browser does not support camera. Try Scan from Photo.';
+          }
+      }
+      setHasPermission(false);
+      setError(message);
+    }
+  };
+
   const startScanning = async () => {
     try {
       setError('');
@@ -42,10 +96,11 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
         throw new Error('MediaDevices API not supported');
       }
 
-      // Prompt for camera permission first (iOS Safari requirement)
-      const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      tempStream.getTracks().forEach((t) => t.stop());
-      setHasPermission(true);
+      if (hasPermission !== true) {
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        tempStream.getTracks().forEach((t) => t.stop());
+        setHasPermission(true);
+      }
 
       // Choose the back camera if available
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -66,20 +121,25 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
 
       setStreamControls(controls);
     } catch (err: any) {
-      console.error('Scanner error:', err, { name: err?.name, message: err?.message });
+      const embedded = isEmbedded();
+      console.error('Scanner error:', err, { name: err?.name, message: err?.message, embedded, protocol: window.location?.protocol });
       setHasPermission(false);
       let message = 'Camera access denied or not available';
       switch (err?.name) {
         case 'NotAllowedError':
         case 'PermissionDeniedError':
-          message = 'Camera permission denied. Enable it in Settings > Safari > Camera, then reload.';
+          message = embedded
+            ? 'Camera is blocked in this embedded preview. Open in a new tab to grant permission.'
+            : 'Camera permission denied. Enable it in your browser settings, then reload.';
           break;
         case 'NotFoundError':
         case 'OverconstrainedError':
           message = 'No suitable camera found. Try Scan from Photo.';
           break;
         case 'SecurityError':
-          message = 'Camera blocked by browser. Open this site over HTTPS or in Safari.';
+          message = embedded
+            ? 'Camera is blocked in this embedded preview. Open in a new tab to grant permission.'
+            : 'Camera blocked by browser. Open this site over HTTPS.';
           break;
         default:
           if (err?.message?.includes('MediaDevices')) {
@@ -138,7 +198,7 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
               Point your camera at a barcode to check if the product is connected to USA or other region
             </p>
           </div>
-          <Button onClick={onToggleScanning} className="bg-scanner-guide hover:bg-scanner-guide/90 text-scanner-guide-foreground">
+          <Button onClick={requestCameraPermissionInGesture} className="bg-scanner-guide hover:bg-scanner-guide/90 text-scanner-guide-foreground">
             <Scan className="w-4 h-4 mr-2" />
             Start Scanning
           </Button>
@@ -155,6 +215,13 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
               onChange={handleImageSelected}
             />
           </div>
+          {typeof window !== 'undefined' && isEmbedded() && (
+            <div className="mt-2">
+              <Button variant="ghost" size="sm" onClick={() => window.open(window.location.href, '_blank', 'noopener,noreferrer')}>
+                Open in new tab (for camera)
+              </Button>
+            </div>
+          )}
           {hasPermission === false && (
             <p className="text-destructive text-sm mt-2">
               Camera permission required to scan barcodes
@@ -229,9 +296,16 @@ export function Scanner({ onScan, isScanning, onToggleScanning }: ScannerProps) 
           <div className="text-center p-4">
             <p className="text-destructive font-medium mb-2">Scanner Error</p>
             <p className="text-sm text-muted-foreground">{error}</p>
-            <Button onClick={onToggleScanning} variant="outline" className="mt-3">
-              Try Again
-            </Button>
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <Button onClick={onToggleScanning} variant="outline">
+                Try Again
+              </Button>
+              {typeof window !== 'undefined' && isEmbedded() && (
+                <Button onClick={() => window.open(window.location.href, '_blank', 'noopener,noreferrer')}>
+                  Open in new tab
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
